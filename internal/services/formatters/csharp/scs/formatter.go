@@ -22,7 +22,7 @@ import (
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/severities"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/tools"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
+	"github.com/apex/log"
 
 	dockerEntities "github.com/ZupIT/horusec/internal/entities/docker"
 	errorsEnums "github.com/ZupIT/horusec/internal/enums/errors"
@@ -50,7 +50,7 @@ func NewFormatter(service formatters.IService) formatters.IFormatter {
 
 func (f *Formatter) StartAnalysis(projectSubPath string) {
 	if f.ToolIsToIgnore(tools.SecurityCodeScan) || f.IsDockerDisabled() {
-		logger.LogDebugWithLevel(messages.MsgDebugToolIgnored + tools.SecurityCodeScan.ToString())
+		log.Debugf(messages.MsgDebugToolIgnored, tools.SecurityCodeScan.ToString())
 		return
 	}
 
@@ -121,7 +121,7 @@ func (f *Formatter) getDockerConfig(projectSubPath string) *dockerEntities.Analy
 	}
 	filename, err := fileUtils.GetFilenameByExt(f.GetConfigProjectPath(), projectSubPath, enums.SolutionExt)
 	if err != nil {
-		logger.LogError(messages.MsgErrorGetFilenameByExt, err)
+		log.Errorf(messages.MsgErrorGetFilenameByExt, err)
 	}
 	analysisData.SetSlnName(filename)
 	return analysisData.SetData(f.GetCustomImageByLanguage(languages.CSharp), images.Csharp)

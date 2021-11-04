@@ -15,18 +15,16 @@
 package languagedetect
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
+	"github.com/apex/log"
 	doubleStar "github.com/bmatcuk/doublestar/v4"
 	"github.com/go-enry/go-enry/v2"
 	"github.com/google/uuid"
 
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	"github.com/ZupIT/horusec/config"
 	"github.com/ZupIT/horusec/internal/enums/toignore"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
@@ -49,7 +47,7 @@ func (ld *LanguageDetect) Detect(directory string) ([]languages.Language, error)
 	langs := []string{languages.Leaks.ToString(), languages.Generic.ToString()}
 	languagesFound, err := ld.getLanguages(directory)
 	if err != nil {
-		logger.LogErrorWithLevel(messages.MsgErrorDetectLanguage, err)
+		log.Errorf(messages.MsgErrorDetectLanguage, err)
 		return nil, err
 	}
 
@@ -62,8 +60,7 @@ func (ld *LanguageDetect) Detect(directory string) ([]languages.Language, error)
 func (ld *LanguageDetect) getLanguages(directory string) (languagesFound []string, err error) {
 	filesToSkip, languagesFound, err := ld.walkInPathAndReturnTotalToSkip(directory)
 	if filesToSkip > 0 {
-		msg := strings.ReplaceAll(messages.MsgWarnTotalFolderOrFileWasIgnored, "{{0}}", strconv.Itoa(filesToSkip))
-		logger.LogWarnWithLevel(msg)
+		log.Warnf(messages.MsgWarnTotalFolderOrFileWasIgnored, filesToSkip)
 	}
 	return ld.uniqueLanguages(languagesFound), err
 }
@@ -88,12 +85,15 @@ func (ld *LanguageDetect) execWalkToGetLanguagesAndReturnIfSkip(
 	path string, info os.FileInfo) (languagesFound []string, skip bool) {
 	skip = ld.filesAndFoldersToIgnore(path)
 	if skip {
-		logger.LogDebugWithLevel(messages.MsgDebugFolderOrFileIgnored, filepath.Clean(path))
+		log.Debugf(messages.MsgDebugFolderOrFileIgnored, filepath.Clean(path))
 	}
 	if !info.IsDir() && !skip {
 		newLanguages := enry.GetLanguages(path, nil)
-		logger.LogTraceWithLevel(messages.MsgTraceLanguageFound,
-			map[string][]string{path: newLanguages})
+		log.WithFields(log.Fields{
+			"path":      path,
+			"languages": newLanguages,
+		}).Debug(messages.MsgTraceLanguageFound)
+
 		languagesFound = append(languagesFound, newLanguages...)
 	}
 	return languagesFound, skip
@@ -167,13 +167,10 @@ func (ld *LanguageDetect) copyProjectToHorusecFolder(directory string) error {
 	folderDstName := filepath.Join(directory, ".horusec", ld.analysisID.String())
 	err := copy.Copy(directory, folderDstName, ld.filesAndFoldersToIgnore)
 	if err != nil {
-		logger.LogErrorWithLevel(messages.MsgErrorCopyProjectToHorusecAnalysis, err)
+		log.Errorf(messages.MsgErrorCopyProjectToHorusecAnalysis, err)
 	} else {
-		fmt.Print("\n")
-		logger.LogWarnWithLevel(fmt.Sprintf(messages.MsgWarnMonitorTimeoutIn, ld.configs.TimeoutInSecondsAnalysis))
-		fmt.Print("\n")
-		logger.LogWarnWithLevel(messages.MsgWarnDontRemoveHorusecFolder, folderDstName)
-		fmt.Print("\n")
+		log.Warnf(messages.MsgWarnMonitorTimeoutIn, ld.configs.TimeoutInSecondsAnalysis)
+		log.Warnf(messages.MsgWarnDontRemoveHorusecFolder, folderDstName)
 	}
 	return err
 }

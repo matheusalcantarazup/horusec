@@ -27,13 +27,13 @@ import (
 	"github.com/ZupIT/horusec-devkit/pkg/entities/vulnerability"
 	"github.com/ZupIT/horusec/internal/utils/file"
 	vulnhash "github.com/ZupIT/horusec/internal/utils/vuln_hash"
+	"github.com/apex/log"
 
 	"github.com/ZupIT/horusec/internal/enums/images"
 
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/severities"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/tools"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	dockerEntities "github.com/ZupIT/horusec/internal/entities/docker"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
 	"github.com/ZupIT/horusec/internal/services/formatters"
@@ -52,7 +52,7 @@ func NewFormatter(service formatters.IService) formatters.IFormatter {
 
 func (f *Formatter) StartAnalysis(projectSubPath string) {
 	if f.ToolIsToIgnore(tools.Safety) || f.IsDockerDisabled() {
-		logger.LogDebugWithLevel(messages.MsgDebugToolIgnored + tools.Safety.ToString())
+		log.Debugf(messages.MsgDebugToolIgnored, tools.Safety.ToString())
 		return
 	}
 
@@ -84,8 +84,9 @@ func (f *Formatter) getDockerConfig(projectSubPath string) *dockerEntities.Analy
 
 func (f *Formatter) parseOutput(output, projectSubPath string) {
 	if output == "" {
-		logger.LogDebugWithLevel(messages.MsgDebugOutputEmpty,
-			map[string]interface{}{"tool": tools.Safety.ToString()})
+		log.WithFields(log.Fields{
+			"tool": tools.Safety.ToString(),
+		}).Debug(messages.MsgDebugOutputEmpty)
 		return
 	}
 	if len(output) >= 19 && strings.EqualFold(output[:19], "ERROR_REQ_NOT_FOUND") {
@@ -101,7 +102,9 @@ func (f *Formatter) parseOutput(output, projectSubPath string) {
 
 func (f *Formatter) parseOutputToSafetyOutput(output string) (safetyOutput entities.SafetyOutput, err error) {
 	err = json.Unmarshal([]byte(output), &safetyOutput)
-	logger.LogErrorWithLevel(f.GetAnalysisIDErrorMessage(tools.Safety, output), err)
+	if err != nil {
+		log.Errorf(f.GetAnalysisIDErrorMessage(tools.Safety, output), err)
+	}
 	return safetyOutput, err
 }
 
@@ -131,7 +134,9 @@ func (f *Formatter) getVulnerabilityLineByName(line, fileName string) string {
 	}
 
 	defer func() {
-		logger.LogErrorWithLevel(messages.MsgErrorDeferFileClose, fileOpened.Close())
+		if err := fileOpened.Close(); err != nil {
+			log.Errorf(messages.MsgErrorDeferFileClose, err)
+		}
 	}()
 	scanner := bufio.NewScanner(fileOpened)
 	return f.getLine(line, scanner)

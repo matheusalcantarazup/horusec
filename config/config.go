@@ -17,10 +17,14 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/apex/log"
+	"github.com/apex/log/handlers/cli"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -33,7 +37,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/iancoleman/strcase"
-	"github.com/sirupsen/logrus"
 
 	"github.com/ZupIT/horusec/cmd/app/version"
 	"github.com/ZupIT/horusec/config/dist"
@@ -132,14 +135,14 @@ type Config struct {
 func New() *Config {
 	wd, err := os.Getwd()
 	if err != nil {
-		logger.LogWarn("Error to get current working directory: %v", err)
+		log.Warnf("Error to get current working directory: %v", err)
 	}
 
 	return &Config{
 		Version: version.Version,
 		GlobalOptions: GlobalOptions{
 			ConfigFilePath: filepath.Join(wd, "horusec-config.json"),
-			LogLevel:       logrus.InfoLevel.String(),
+			LogLevel:       log.InfoLevel.String(),
 			LogFilePath: filepath.Join(
 				os.TempDir(), fmt.Sprintf("horusec-%s.log", time.Now().Format("2006-01-02-15-04-05")),
 			),
@@ -310,10 +313,10 @@ func (c *Config) LoadFromConfigFile() *Config {
 		customImg := customimages.CustomImages{}
 		bytes, err := json.Marshal(images)
 		if err != nil {
-			logger.LogErrorWithLevel(messages.MsgErrorWhileParsingCustomImages, err)
+			log.Errorf(messages.MsgErrorWhileParsingCustomImages, err)
 		}
 		if err := json.Unmarshal(bytes, &customImg); err != nil {
-			logger.LogErrorWithLevel(messages.MsgErrorWhileParsingCustomImages, err)
+			log.Errorf(messages.MsgErrorWhileParsingCustomImages, err)
 		}
 		c.CustomImages = customImg
 	}
@@ -361,7 +364,9 @@ func (c *Config) LoadFromEnvironmentVariables() *Config {
 
 	if v := env.GetEnvOrDefaultInterface(EnvHeaders, c.Headers); v != nil {
 		headers, err := jsonutils.ConvertInterfaceToMapString(v)
-		logger.LogErrorWithLevel(messages.MsgErrorSetHeadersOnConfig, err)
+		if err != nil {
+			log.Errorf(messages.MsgErrorSetHeadersOnConfig, err)
+		}
 		c.Headers = headers
 	}
 
@@ -399,7 +404,7 @@ func (c *Config) PersistentPreRun(cmd *cobra.Command, _ []string) error {
 		Normalize().
 		ConfigureLogger()
 	if err != nil {
-		logger.LogErrorWithLevel(messages.MsgErrorSettingLogFile, err)
+		log.Errorf(messages.MsgErrorSettingLogFile, err)
 	}
 
 	return nil
@@ -407,12 +412,34 @@ func (c *Config) PersistentPreRun(cmd *cobra.Command, _ []string) error {
 
 // ConfigureLogger create the log file and configure the log output.
 func (c *Config) ConfigureLogger() error {
-	log, err := os.OpenFile(c.LogFilePath, os.O_CREATE|os.O_RDWR, os.ModePerm)
+	logFile, err := os.OpenFile(c.LogFilePath, os.O_CREATE|os.O_RDWR, os.ModePerm)
 	if err != nil {
 		return err
 	}
-	logger.LogSetOutput(log, os.Stdout)
-	logger.LogDebugWithLevel("Set log file to " + log.Name())
+
+	cli.Strings = [...]string{
+		log.DebugLevel: "•",
+		log.InfoLevel:  "•",
+		log.WarnLevel:  "",
+		log.ErrorLevel: "⨯",
+		log.FatalLevel: "⨯",
+	}
+
+	writer := io.MultiWriter(os.Stderr, logFile)
+	log.SetHandler(cli.New(writer))
+
+	if c.LogLevel == "trace" {
+		c.LogLevel = log.DebugLevel.String()
+	}
+	level, err := log.ParseLevel(c.LogLevel)
+	if err != nil {
+		return err
+	}
+	log.SetLevel(level)
+
+	log.Debugf("Set log file to %s", logFile.Name())
+
+	logger.LogSetOutput(io.Discard)
 	return nil
 }
 
@@ -421,13 +448,15 @@ func (c *Config) IsEmptyRepositoryAuthorization() bool {
 }
 
 func (c *Config) setViperConfigsAndReturnIfExistFile() bool {
-	logger.LogDebugWithLevel(messages.MsgDebugConfigFileRunningOnPath + c.ConfigFilePath)
+	log.Debugf(messages.MsgDebugConfigFileRunningOnPath, c.ConfigFilePath)
 	if _, err := os.Stat(c.ConfigFilePath); os.IsNotExist(err) {
-		logger.LogWarn(messages.MsgWarnConfigFileNotFoundOnPath)
+		log.Warn(messages.MsgWarnConfigFileNotFoundOnPath)
 		return false
 	}
 	viper.SetConfigFile(c.ConfigFilePath)
-	logger.LogPanicWithLevel(messages.MsgPanicGetConfigFilePath, viper.ReadInConfig())
+	if err := viper.ReadInConfig(); err != nil {
+		log.Errorf(messages.MsgPanicGetConfigFilePath, err)
+	}
 	return true
 }
 
@@ -520,7 +549,9 @@ func (c *Config) replaceCommaToSpaceSliceString(input []string) []string {
 func (c *Config) extractFlagValueString(cmd *cobra.Command, name, defaultValue string) string {
 	if cmd.PersistentFlags().Changed(name) {
 		flagValue, err := cmd.PersistentFlags().GetString(name)
-		logger.LogPanicWithLevel(messages.MsgPanicGetFlagValue, err)
+		if err != nil {
+			log.Errorf(messages.MsgPanicGetFlagValue, err)
+		}
 		return flagValue
 	}
 	return defaultValue
@@ -529,7 +560,9 @@ func (c *Config) extractFlagValueString(cmd *cobra.Command, name, defaultValue s
 func (c *Config) extractFlagValueInt64(cmd *cobra.Command, name string, defaultValue int64) int64 {
 	if cmd.PersistentFlags().Changed(name) {
 		flagValue, err := cmd.PersistentFlags().GetInt64(name)
-		logger.LogPanicWithLevel(messages.MsgPanicGetFlagValue, err)
+		if err != nil {
+			log.Errorf(messages.MsgPanicGetFlagValue, err)
+		}
 		return flagValue
 	}
 	return defaultValue
@@ -538,7 +571,9 @@ func (c *Config) extractFlagValueInt64(cmd *cobra.Command, name string, defaultV
 func (c *Config) extractFlagValueBool(cmd *cobra.Command, name string, defaultValue bool) bool {
 	if cmd.PersistentFlags().Changed(name) {
 		flagValue, err := cmd.PersistentFlags().GetBool(name)
-		logger.LogPanicWithLevel(messages.MsgPanicGetFlagValue, err)
+		if err != nil {
+			log.Errorf(messages.MsgPanicGetFlagValue, err)
+		}
 
 		return flagValue
 	}
@@ -548,7 +583,9 @@ func (c *Config) extractFlagValueBool(cmd *cobra.Command, name string, defaultVa
 func (c *Config) extractFlagValueStringSlice(cmd *cobra.Command, name string, defaultValue []string) []string {
 	if cmd.PersistentFlags().Changed(name) {
 		flagValue, err := cmd.PersistentFlags().GetStringSlice(name)
-		logger.LogPanicWithLevel(messages.MsgPanicGetFlagValue, err)
+		if err != nil {
+			log.Errorf(messages.MsgPanicGetFlagValue, err)
+		}
 		return flagValue
 	}
 	return defaultValue
@@ -558,7 +595,9 @@ func (c *Config) extractFlagValueStringToString(
 	cmd *cobra.Command, name string, defaultValue map[string]string) map[string]string {
 	if cmd.PersistentFlags().Changed(name) {
 		flagValue, err := cmd.PersistentFlags().GetStringToString(name)
-		logger.LogPanicWithLevel(messages.MsgPanicGetFlagValue, err)
+		if err != nil {
+			log.Errorf(messages.MsgPanicGetFlagValue, err)
+		}
 		return flagValue
 	}
 	return defaultValue

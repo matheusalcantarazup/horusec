@@ -20,7 +20,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
+	"github.com/apex/log"
 )
 
 func Copy(src, dst string, skip func(src string) bool) error {
@@ -39,7 +39,7 @@ func Copy(src, dst string, skip func(src string) bool) error {
 }
 
 func copyByType(src, dst, path string, info os.FileInfo) error {
-	logger.LogTraceWithLevel("Copying ", "src: "+src, "dst: "+dst, "path: "+path)
+	log.Debugf("Copying src: %s dst: %s, path: %s", src, dst, path)
 	switch {
 	case info.IsDir():
 		return copyDir(src, dst, path)
@@ -54,7 +54,9 @@ func copyFile(src, dst, path string) error {
 	file, err := os.Create(replacePathSrcToDst(path, src, dst))
 	if file != nil {
 		defer func() {
-			logger.LogError("Error defer file close", file.Close())
+			if err := file.Close(); err != nil {
+				log.Errorf("Error defer file close", err)
+			}
 		}()
 	}
 	if err != nil {
@@ -71,7 +73,9 @@ func copyContentSrcFileToDstFile(srcPath string, dstFile *os.File) error {
 	srcFile, err := os.Open(srcPath)
 	if srcFile != nil {
 		defer func() {
-			logger.LogError("Error defer file close", srcFile.Close())
+			if err := srcFile.Close(); err != nil {
+				log.Errorf("Error defer file close", err)
+			}
 		}()
 	}
 	if err != nil {

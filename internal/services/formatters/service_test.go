@@ -169,7 +169,7 @@ func TestGetAnalysisIDErrorMessage(t *testing.T) {
 		result := monitorController.GetAnalysisIDErrorMessage(tools.Bandit, "test")
 
 		assert.NotEmpty(t, result)
-		assert.Equal(t, "{HORUSEC_CLI} Something error went wrong in Bandit tool"+
+		assert.Equal(t, " Something error went wrong in Bandit tool"+
 			" | analysisID -> 00000000-0000-0000-0000-000000000000 | output -> test", result)
 	})
 }
@@ -258,7 +258,7 @@ func TestLogDebugWithReplace(t *testing.T) {
 		assert.NotPanics(t, func() {
 			monitorController.LogDebugWithReplace(messages.MsgDebugToolStartAnalysis, tools.NpmAudit, languages.Javascript)
 		})
-		assert.Contains(t, stdOutMock.String(), `level=debug msg="{HORUSEC_CLI} Running NpmAudit - JavaScript in analysisID: [00000000-0000-0000-0000-000000000000]`)
+		assert.Contains(t, stdOutMock.String(), `level=debug msg=" Running NpmAudit - JavaScript in analysisID: [00000000-0000-0000-0000-000000000000]`)
 	})
 }
 
@@ -280,7 +280,7 @@ func TestLogAnalysisError(t *testing.T) {
 			monitorController.SetAnalysisError(errors.New("test"), tools.GoSec, "")
 			monitorController.SetAnalysisError(errors.New("test2"), tools.GitLeaks, "")
 		})
-		assert.Contains(t, stdOutMock.String(), `{HORUSEC_CLI} Something error went wrong in GoSec tool | analysisID -> 00000000-0000-0000-0000-000000000000 | output -> `)
+		assert.Contains(t, stdOutMock.String(), ` Something error went wrong in GoSec tool | analysisID -> 00000000-0000-0000-0000-000000000000 | output -> `)
 	})
 	t.Run("should not panic when logging error and exists projectSubPath", func(t *testing.T) {
 		monitorController := NewFormatterService(&analysis.Analysis{}, &docker.Mock{}, &config.Config{})
@@ -291,7 +291,7 @@ func TestLogAnalysisError(t *testing.T) {
 			monitorController.SetAnalysisError(errors.New("test"), tools.GoSec, "/tmp")
 			monitorController.SetAnalysisError(errors.New("test2"), tools.GitLeaks, "/tmp")
 		})
-		assert.Contains(t, stdOutMock.String(), `{HORUSEC_CLI} Something error went wrong in GoSec tool | analysisID -> 00000000-0000-0000-0000-000000000000 | output ->  | ProjectSubPath -> /tmp - test"`)
+		assert.Contains(t, stdOutMock.String(), ` Something error went wrong in GoSec tool | analysisID -> 00000000-0000-0000-0000-000000000000 | output ->  | ProjectSubPath -> /tmp - test"`)
 	})
 }
 

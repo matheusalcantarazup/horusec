@@ -21,9 +21,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	errorsEnums "github.com/ZupIT/horusec/internal/enums/errors"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
+	"github.com/apex/log"
 )
 
 const MinVersionDockerAccept = 19
@@ -50,7 +50,7 @@ func (r *RequirementDocker) ValidateDocker() error {
 func (r *RequirementDocker) validateIfDockerIsInstalled() (string, error) {
 	response, err := r.execDockerVersion()
 	if err != nil {
-		logger.LogInfo(messages.MsgInfoHowToInstallDocker)
+		log.Info(messages.MsgInfoHowToInstallDocker)
 		return "", err
 	}
 	if !r.checkIfContainsDockerVersion(response) {
@@ -70,8 +70,9 @@ func (r *RequirementDocker) validateIfDockerIsSupported(version string) error {
 func (r *RequirementDocker) execDockerVersion() (string, error) {
 	responseBytes, err := exec.Command("docker", "-v").CombinedOutput()
 	if err != nil {
-		logger.LogErrorWithLevel(
-			messages.MsgErrorWhenCheckRequirementsDocker, errors.New(string(responseBytes)))
+		log.Errorf(
+			messages.MsgErrorWhenCheckRequirementsDocker, errors.New(string(responseBytes)),
+		)
 		return "", err
 	}
 	return strings.ToLower(string(responseBytes)), nil
@@ -80,7 +81,7 @@ func (r *RequirementDocker) execDockerVersion() (string, error) {
 func (r *RequirementDocker) checkIfDockerIsRunning() error {
 	responseBytes, err := exec.Command("docker", "ps").CombinedOutput()
 	if err != nil {
-		logger.LogErrorWithLevel(
+		log.Errorf(
 			messages.MsgErrorWhenCheckDockerRunning, errors.New(string(responseBytes)))
 	}
 	return err
@@ -89,14 +90,12 @@ func (r *RequirementDocker) checkIfDockerIsRunning() error {
 func (r *RequirementDocker) validateIfDockerIsRunningInMinVersion(response string) error {
 	version, subversion, err := r.extractDockerVersionFromString(response)
 	if err != nil {
-		logger.LogErrorWithLevel(messages.MsgErrorWhenDockerIsLowerVersion, ErrMinVersion)
+		log.Errorf(messages.MsgErrorWhenDockerIsLowerVersion, ErrMinVersion)
 		return err
 	}
 
 	if version <= MinVersionDockerAccept && subversion < MinSubVersionDockerAccept {
-		fmt.Print("\n")
-		logger.LogInfo(messages.MsgInfoDockerLowerVersion)
-		fmt.Print("\n")
+		log.Infof("\n%s\n", messages.MsgInfoDockerLowerVersion)
 	}
 
 	return nil

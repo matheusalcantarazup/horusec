@@ -22,13 +22,13 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/apex/log"
 	"github.com/google/uuid"
 
 	"github.com/ZupIT/horusec-devkit/pkg/entities/analysis"
 	"github.com/ZupIT/horusec-devkit/pkg/entities/cli"
 	"github.com/ZupIT/horusec-devkit/pkg/services/http/request"
 	"github.com/ZupIT/horusec-devkit/pkg/services/http/request/entities"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	"github.com/ZupIT/horusec/config"
 )
 
@@ -155,8 +155,7 @@ func (s *Service) getHorusecAPIURL() string {
 
 func (s *Service) loggerSendError(err error) {
 	if err != nil {
-		print("\n")
-		logger.LogStringAsError(fmt.Sprintf("[HORUSEC] %s", err.Error()))
+		log.Error(err.Error())
 	}
 }
 

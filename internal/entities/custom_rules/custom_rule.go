@@ -22,12 +22,12 @@ import (
 
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
 	engine "github.com/ZupIT/horusec-engine"
+	"github.com/apex/log"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
 	"github.com/ZupIT/horusec-devkit/pkg/enums/confidence"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/severities"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	"github.com/ZupIT/horusec-engine/text"
 	customRulesEnums "github.com/ZupIT/horusec/internal/enums/custom_rules"
 	"github.com/ZupIT/horusec/internal/services/engines/csharp"
@@ -86,7 +86,7 @@ func (c *CustomRule) GetExpressions() (expressions []*regexp.Regexp) {
 	for _, expression := range c.Expressions {
 		regex, err := regexp.Compile(expression)
 		if err != nil {
-			logger.LogError(fmt.Sprintf("{HORUSEC_CLI} failed to compile custom rule regex: %s", expression), err)
+			log.Errorf("Failed to compile custom rule regex %s: %v", expression, err)
 		} else {
 			expressions = append(expressions, regex)
 		}

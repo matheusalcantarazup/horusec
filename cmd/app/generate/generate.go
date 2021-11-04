@@ -18,9 +18,9 @@ import (
 	"encoding/json"
 	"os"
 
+	"github.com/apex/log"
 	"github.com/spf13/cobra"
 
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	"github.com/ZupIT/horusec/config"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
 )
@@ -49,13 +49,13 @@ func (g *Generate) CreateCobraCmd() *cobra.Command {
 func (g *Generate) runE(_ *cobra.Command, _ []string) error {
 	if _, err := os.Stat(g.configs.ConfigFilePath); os.IsNotExist(err) {
 		if err := g.createAndWriteOnFile(); err != nil {
-			logger.LogError(messages.MsgErrorErrorOnCreateConfigFile, err)
+			log.Errorf(messages.MsgErrorErrorOnCreateConfigFile, err)
 			return err
 		}
-		logger.LogInfoWithLevel(messages.MsgInfoConfigFileCreatedSuccess, g.configs.ConfigFilePath)
+		log.Infof(messages.MsgInfoConfigFileCreatedSuccess, g.configs.ConfigFilePath)
 		return nil
 	}
-	logger.LogInfo(messages.MsgInfoConfigAlreadyExist, g.configs.ConfigFilePath)
+	log.Infof(messages.MsgInfoConfigAlreadyExist, g.configs.ConfigFilePath)
 	return g.readFileAndCreateNewKeys()
 }
 
@@ -65,7 +65,9 @@ func (g *Generate) createAndWriteOnFile() error {
 		return err
 	}
 	defer func() {
-		logger.LogError(messages.MsgErrorErrorOnCreateConfigFile, outputFile.Close())
+		if err := outputFile.Close(); err != nil {
+			log.Errorf(messages.MsgErrorErrorOnCreateConfigFile, err)
+		}
 	}()
 	return g.writeConfigOnFile(outputFile)
 }
@@ -93,12 +95,13 @@ func (g *Generate) writeConfigOnFile(outputFile *os.File) error {
 func (g *Generate) readFileAndCreateNewKeys() error {
 	configFile, err := os.OpenFile(g.configs.ConfigFilePath, os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
-		logger.LogError(messages.MsgErrorErrorOnReadConfigFile+g.configs.ConfigFilePath, err)
+		log.Errorf(messages.MsgErrorErrorOnReadConfigFile, g.configs.ConfigFilePath, err)
 		return err
 	}
 	defer func() {
-		logger.LogError(
-			messages.MsgErrorErrorOnReadConfigFile+g.configs.ConfigFilePath, configFile.Close())
+		if err := configFile.Close(); err != nil {
+			log.Errorf(messages.MsgErrorErrorOnReadConfigFile, g.configs.ConfigFilePath, err)
+		}
 	}()
 	return g.writeConfigOnFile(configFile)
 }

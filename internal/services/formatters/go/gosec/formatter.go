@@ -19,13 +19,13 @@ import (
 	"strconv"
 
 	vulnhash "github.com/ZupIT/horusec/internal/utils/vuln_hash"
+	"github.com/apex/log"
 
 	"github.com/ZupIT/horusec/internal/enums/images"
 
 	"github.com/ZupIT/horusec-devkit/pkg/entities/vulnerability"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/tools"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	dockerEntities "github.com/ZupIT/horusec/internal/entities/docker"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
 	"github.com/ZupIT/horusec/internal/services/formatters"
@@ -44,7 +44,7 @@ func NewFormatter(service formatters.IService) formatters.IFormatter {
 
 func (f *Formatter) StartAnalysis(projectSubPath string) {
 	if f.ToolIsToIgnore(tools.GoSec) || f.IsDockerDisabled() {
-		logger.LogDebugWithLevel(messages.MsgDebugToolIgnored + tools.GoSec.ToString())
+		log.Debugf(messages.MsgDebugToolIgnored, tools.GoSec.ToString())
 		return
 	}
 
@@ -66,8 +66,9 @@ func (f *Formatter) startGoSec(projectSubPath string) error {
 
 func (f *Formatter) processOutput(output string) {
 	if output == "" {
-		logger.LogDebugWithLevel(
-			messages.MsgDebugOutputEmpty, map[string]interface{}{"tool": tools.GoSec.ToString()})
+		log.WithFields(log.Fields{
+			"tool": tools.GoSec.ToString(),
+		}).Debug(messages.MsgDebugOutputEmpty)
 		return
 	}
 
@@ -81,7 +82,9 @@ func (f *Formatter) processOutput(output string) {
 
 func (f *Formatter) parseOutputToGoOutput(output string) (golangOutput entities.Output, err error) {
 	err = json.Unmarshal([]byte(output), &golangOutput)
-	logger.LogErrorWithLevel(f.GetAnalysisIDErrorMessage(tools.GoSec, output), err)
+	if err != nil {
+		log.Errorf(f.GetAnalysisIDErrorMessage(tools.GoSec, output), err)
+	}
 	return golangOutput, err
 }
 

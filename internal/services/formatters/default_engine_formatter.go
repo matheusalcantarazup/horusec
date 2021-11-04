@@ -17,10 +17,10 @@ package formatters
 import (
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/tools"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	engine "github.com/ZupIT/horusec-engine"
 	"github.com/ZupIT/horusec/internal/enums/engines"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
+	"github.com/apex/log"
 )
 
 type RuleManager interface {
@@ -45,7 +45,7 @@ func NewDefaultFormatter(svc IService, manager RuleManager, language languages.L
 
 func (f *DefaultFormatter) StartAnalysis(src string) {
 	if f.svc.ToolIsToIgnore(tools.HorusecEngine) {
-		logger.LogDebugWithLevel(messages.MsgDebugToolIgnored + tools.HorusecEngine.ToString())
+		log.Debugf(messages.MsgDebugToolIgnored, tools.HorusecEngine.ToString())
 		return
 	}
 	f.svc.SetAnalysisError(f.execEngineAndParseResults(src), tools.HorusecEngine, src)

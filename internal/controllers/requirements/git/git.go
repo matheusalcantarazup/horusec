@@ -20,9 +20,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	errorsEnums "github.com/ZupIT/horusec/internal/enums/errors"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
+	"github.com/apex/log"
 )
 
 const MinVersionGitAccept = 2
@@ -60,7 +60,7 @@ func (r *RequirementGit) validateIfGitIsInstalled() (string, error) {
 func (r *RequirementGit) validateIfGitIsSupported(version string) error {
 	err := r.validateIfGitIsRunningInMinVersion(version)
 	if err != nil {
-		logger.LogInfo(messages.MsgInfoHowToInstallGit)
+		log.Info(messages.MsgInfoHowToInstallGit)
 		return err
 	}
 	return nil
@@ -69,7 +69,7 @@ func (r *RequirementGit) validateIfGitIsSupported(version string) error {
 func (r *RequirementGit) execGitVersion() (string, error) {
 	responseBytes, err := exec.Command("git", "--version").CombinedOutput()
 	if err != nil {
-		logger.LogErrorWithLevel(messages.MsgErrorWhenCheckRequirementsGit, err)
+		log.Errorf(messages.MsgErrorWhenCheckRequirementsGit, err)
 		return "", err
 	}
 	return strings.ToLower(string(responseBytes)), nil
@@ -81,10 +81,10 @@ func (r *RequirementGit) validateIfGitIsRunningInMinVersion(response string) err
 		return err
 	}
 	if version < MinVersionGitAccept {
-		logger.LogErrorWithLevel(messages.MsgErrorWhenGitIsLowerVersion, ErrMinVersion)
+		log.Errorf(messages.MsgErrorWhenGitIsLowerVersion, ErrMinVersion)
 		return errorsEnums.ErrGitLowerVersion
 	} else if version == MinVersionGitAccept && subversion < MinSubVersionGitAccept {
-		logger.LogErrorWithLevel(messages.MsgErrorWhenGitIsLowerVersion, ErrMinVersion)
+		log.Errorf(messages.MsgErrorWhenGitIsLowerVersion, ErrMinVersion)
 		return errorsEnums.ErrGitLowerVersion
 	}
 	return nil

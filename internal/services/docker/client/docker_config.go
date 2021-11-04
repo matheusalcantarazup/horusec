@@ -15,16 +15,16 @@
 package client
 
 import (
+	"github.com/apex/log"
 	docker "github.com/docker/docker/client"
 
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
 )
 
 func NewDockerClient() *docker.Client {
 	dockerClient, err := docker.NewClientWithOpts(docker.WithAPIVersionNegotiation())
 	if err != nil {
-		logger.LogPanicWithLevel(messages.MsgPanicNotConnectDocker, err)
+		log.Fatalf(messages.MsgPanicNotConnectDocker, err)
 	}
 
 	return dockerClient

@@ -20,12 +20,12 @@ import (
 
 	"github.com/ZupIT/horusec-devkit/pkg/entities/vulnerability"
 	vulnhash "github.com/ZupIT/horusec/internal/utils/vuln_hash"
+	"github.com/apex/log"
 
 	"github.com/ZupIT/horusec/internal/enums/images"
 
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/tools"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	dockerEntities "github.com/ZupIT/horusec/internal/entities/docker"
 	errorsEnums "github.com/ZupIT/horusec/internal/enums/errors"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
@@ -45,7 +45,7 @@ func NewFormatter(service formatters.IService) formatters.IFormatter {
 
 func (f *Formatter) StartAnalysis(projectSubPath string) {
 	if f.ToolIsToIgnore(tools.Brakeman) || f.IsDockerDisabled() {
-		logger.LogDebugWithLevel(messages.MsgDebugToolIgnored + tools.Brakeman.ToString())
+		log.Debugf(messages.MsgDebugToolIgnored, tools.Brakeman.ToString())
 		return
 	}
 
@@ -88,7 +88,9 @@ func (f *Formatter) newContainerOutputFromString(containerOutput string) (output
 	}
 
 	err = json.Unmarshal([]byte(containerOutput), &output)
-	logger.LogErrorWithLevel(f.GetAnalysisIDErrorMessage(tools.Brakeman, containerOutput), err)
+	if err != nil {
+		log.Errorf(f.GetAnalysisIDErrorMessage(tools.Brakeman, containerOutput), err)
+	}
 	return output, err
 }
 

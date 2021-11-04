@@ -21,12 +21,12 @@ import (
 
 	"github.com/ZupIT/horusec-devkit/pkg/entities/vulnerability"
 	vulnhash "github.com/ZupIT/horusec/internal/utils/vuln_hash"
+	"github.com/apex/log"
 
 	"github.com/ZupIT/horusec/internal/enums/images"
 
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/tools"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	dockerEntities "github.com/ZupIT/horusec/internal/entities/docker"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
 	"github.com/ZupIT/horusec/internal/services/formatters"
@@ -45,7 +45,7 @@ func NewFormatter(service formatters.IService) formatters.IFormatter {
 
 func (f *Formatter) StartAnalysis(projectSubPath string) {
 	if f.ToolIsToIgnore(tools.Bandit) || f.IsDockerDisabled() {
-		logger.LogDebugWithLevel(messages.MsgDebugToolIgnored + tools.Bandit.ToString())
+		log.Debugf(messages.MsgDebugToolIgnored, tools.Bandit.ToString())
 		return
 	}
 
@@ -76,8 +76,9 @@ func (f *Formatter) getDockerConfig(projectSubPath string) *dockerEntities.Analy
 
 func (f *Formatter) parseOutput(output string) {
 	if output == "" {
-		logger.LogDebugWithLevel(messages.MsgDebugOutputEmpty,
-			map[string]interface{}{"tool": tools.Bandit.ToString()})
+		log.WithFields(log.Fields{
+			"tool": tools.Bandit.ToString(),
+		}).Debug(messages.MsgDebugOutputEmpty)
 		return
 	}
 
@@ -91,7 +92,9 @@ func (f *Formatter) parseOutput(output string) {
 
 func (f *Formatter) parseOutputToBanditOutput(output string) (banditOutput entities.BanditOutput, err error) {
 	err = json.Unmarshal([]byte(output), &banditOutput)
-	logger.LogErrorWithLevel(f.GetAnalysisIDErrorMessage(tools.Bandit, output), err)
+	if err != nil {
+		log.Errorf(f.GetAnalysisIDErrorMessage(tools.Bandit, output), err)
+	}
 	return banditOutput, err
 }
 
@@ -105,8 +108,7 @@ func (f *Formatter) setBanditOutPutInHorusecAnalysis(issues []entities.Result) {
 		}
 	}
 	if totalInformation > 0 {
-		logger.LogWarnWithLevel(
-			strings.ReplaceAll(messages.MsgWarnBanditFoundInformative, "{{0}}", strconv.Itoa(totalInformation)))
+		log.Warnf(messages.MsgWarnBanditFoundInformative, totalInformation)
 	}
 }
 

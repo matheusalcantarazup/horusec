@@ -25,8 +25,8 @@ import (
 	"strings"
 
 	commitauthor "github.com/ZupIT/horusec/internal/entities/commit_author"
+	"github.com/apex/log"
 
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	"github.com/ZupIT/horusec/config"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
 )
@@ -98,12 +98,10 @@ func (g *Git) executeCMD(line, filePath string) ([]byte, error) {
 
 	response, err := cmd.Output()
 	if err != nil {
-		logger.LogErrorWithLevel(
-			messages.MsgErrorGitCommitAuthorsExecute, err,
-			map[string]interface{}{
-				"line_and_path": lineAndPath,
-				"stderr":        stderr.String(),
-			})
+		log.WithFields(log.Fields{
+			"line_and_path": lineAndPath,
+			"stderr":        stderr.String(),
+		}).Errorf(messages.MsgErrorGitCommitAuthorsExecute, err)
 	}
 
 	return response, err
@@ -112,9 +110,7 @@ func (g *Git) executeCMD(line, filePath string) ([]byte, error) {
 func (g *Git) parseOutput(output []byte) (author commitauthor.CommitAuthor) {
 	output = g.getCleanOutput(output)
 	if err := json.Unmarshal(output, &author); err != nil {
-		logger.LogErrorWithLevel(
-			messages.MsgErrorGitCommitAuthorsParseOutput+string(output), err,
-		)
+		log.Errorf(messages.MsgErrorGitCommitAuthorsParseOutput, string(output), err)
 		return g.newCommitAuthorNotFound()
 	}
 	return author
@@ -150,7 +146,7 @@ func (g *Git) getCleanOutput(output []byte) []byte {
 	if idx := bytes.LastIndex(output, []byte("}")); idx >= 0 {
 		return bytes.ReplaceAll(output[:idx+1], []byte("^^^^^"), []byte(`"`))
 	}
-	logger.LogWarn(fmt.Sprintf("Could not to clean git blame output: %s", output))
+	log.Warnf("Could not to clean git blame output: %s", output)
 	return []byte("")
 }
 

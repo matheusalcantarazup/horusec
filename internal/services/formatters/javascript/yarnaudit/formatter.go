@@ -26,7 +26,7 @@ import (
 	"github.com/ZupIT/horusec-devkit/pkg/entities/vulnerability"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/tools"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
+	"github.com/apex/log"
 
 	dockerEntities "github.com/ZupIT/horusec/internal/entities/docker"
 	"github.com/ZupIT/horusec/internal/enums/images"
@@ -50,7 +50,7 @@ func NewFormatter(service formatters.IService) formatters.IFormatter {
 
 func (f *Formatter) StartAnalysis(projectSubPath string) {
 	if f.ToolIsToIgnore(tools.YarnAudit) || f.IsDockerDisabled() {
-		logger.LogDebugWithLevel(messages.MsgDebugToolIgnored + tools.YarnAudit.ToString())
+		log.Debugf(messages.MsgDebugToolIgnored, tools.YarnAudit.ToString())
 		return
 	}
 
@@ -114,13 +114,15 @@ func (f *Formatter) IsRunningError(containerOutput string) bool {
 
 func (f *Formatter) newContainerOutputFromString(containerOutput string) (output *entities.Output, err error) {
 	if containerOutput == "" {
-		logger.LogDebugWithLevel(messages.MsgDebugOutputEmpty,
-			map[string]interface{}{"tool": tools.YarnAudit.ToString()})
+		log.WithFields(log.Fields{
+			"tool": tools.YarnAudit.ToString(),
+		}).Debugf(messages.MsgDebugOutputEmpty)
+
 		return &entities.Output{}, nil
 	}
 
 	if err = json.Unmarshal([]byte(containerOutput), &output); err != nil {
-		logger.LogErrorWithLevel(f.GetAnalysisIDErrorMessage(tools.YarnAudit, containerOutput), err)
+		log.Errorf(f.GetAnalysisIDErrorMessage(tools.YarnAudit, containerOutput), err)
 	}
 
 	return output, err
@@ -161,7 +163,9 @@ func (f *Formatter) getVulnerabilityLineByName(module, version, file string) str
 	}
 
 	defer func() {
-		logger.LogErrorWithLevel(messages.MsgErrorDeferFileClose, fileExisting.Close())
+		if err := fileExisting.Close(); err != nil {
+			log.Errorf(messages.MsgErrorDeferFileClose, err)
+		}
 	}()
 
 	return f.getLine(module, version, bufio.NewScanner(fileExisting))

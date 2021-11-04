@@ -16,14 +16,16 @@ package analyzer
 
 import (
 	"fmt"
+	"io"
 	"path/filepath"
 
-	"log"
 	"os"
 	"os/signal"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/apex/log"
 
 	"github.com/briandowns/spinner"
 	"github.com/google/uuid"
@@ -35,7 +37,6 @@ import (
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/severities"
 	enumsVulnerability "github.com/ZupIT/horusec-devkit/pkg/enums/vulnerability"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 
 	"github.com/ZupIT/horusec/config"
 	languagedetect "github.com/ZupIT/horusec/internal/controllers/language_detect"
@@ -134,7 +135,7 @@ func NewAnalyzer(cfg *config.Config) *Analyzer {
 		printController: printresults.NewPrintResults(entity, cfg),
 		horusec:         horusecAPI.NewHorusecAPIService(cfg),
 		formatter:       formatters.NewFormatterService(entity, dockerAPI, cfg),
-		loading:         newScanLoading(),
+		loading:         newScanLoading(cfg),
 	}
 }
 
@@ -151,14 +152,15 @@ func (a *Analyzer) removeTrashByInterruptProcess() {
 	go func() {
 		for range c {
 			a.removeHorusecFolder()
-			log.Fatal()
+			os.Exit(1)
 		}
 	}()
 }
 
 func (a *Analyzer) removeHorusecFolder() {
-	err := os.RemoveAll(filepath.Join(a.config.ProjectPath, ".horusec"))
-	logger.LogErrorWithLevel(messages.MsgErrorRemoveAnalysisFolder, err)
+	if err := os.RemoveAll(filepath.Join(a.config.ProjectPath, ".horusec")); err != nil {
+		log.Errorf(messages.MsgErrorRemoveAnalysisFolder, err)
+	}
 	if !a.config.DisableDocker {
 		a.docker.DeleteContainersFromAPI()
 	}
@@ -310,7 +312,7 @@ func (a *Analyzer) detectVulnerabilityLeaks(wg *sync.WaitGroup, projectSubPath s
 	spawn(wg, horusecleaks.NewFormatter(a.formatter), projectSubPath)
 
 	if a.config.EnableGitHistoryAnalysis {
-		logger.LogWarnWithLevel(messages.MsgWarnGitHistoryEnable)
+		log.Warn(messages.MsgWarnGitHistoryEnable)
 
 		if err := a.docker.PullImage(a.getCustomOrDefaultImage(languages.Leaks)); err != nil {
 			return err
@@ -439,8 +441,7 @@ func (a *Analyzer) detectVulnerabilityShell(_ *sync.WaitGroup, projectSubPath st
 
 func (a *Analyzer) logProjectSubPath(language languages.Language, subPath string) {
 	if subPath != "" {
-		msg := fmt.Sprintf("Running %s in subpath: %s", language.ToString(), subPath)
-		logger.LogDebugWithLevel(msg)
+		log.Debugf("Running %s in subpath: %s", language.ToString(), subPath)
 	}
 }
 
@@ -457,7 +458,7 @@ func (a *Analyzer) checkIfNoExistHashAndLog(list []string) {
 			}
 		}
 		if !existing {
-			logger.LogWarnWithLevel(messages.MsgWarnHashNotExistOnAnalysis + hash)
+			log.Warn(messages.MsgWarnHashNotExistOnAnalysis + hash)
 		}
 	}
 }
@@ -661,9 +662,15 @@ func spawn(wg *sync.WaitGroup, f formatters.IFormatter, src string) {
 	}()
 }
 
-func newScanLoading() *spinner.Spinner {
+func newScanLoading(cfg *config.Config) *spinner.Spinner {
 	loading := spinner.New(spinner.CharSets[11], LoadingDelay)
 	loading.Suffix = messages.MsgInfoAnalysisLoading
+
+	if cfg.LogLevel == log.DebugLevel.String() {
+		loading.Writer = io.Discard
+	} else {
+		loading.Writer = os.Stderr
+	}
 
 	return loading
 }

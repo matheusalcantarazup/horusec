@@ -25,12 +25,12 @@ import (
 	"github.com/ZupIT/horusec-devkit/pkg/enums/confidence"
 	"github.com/ZupIT/horusec/internal/utils/file"
 	vulnhash "github.com/ZupIT/horusec/internal/utils/vuln_hash"
+	"github.com/apex/log"
 
 	"github.com/ZupIT/horusec/internal/enums/images"
 
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/tools"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	dockerEntities "github.com/ZupIT/horusec/internal/entities/docker"
 	errorsEnums "github.com/ZupIT/horusec/internal/enums/errors"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
@@ -50,7 +50,7 @@ func NewFormatter(service formatters.IService) formatters.IFormatter {
 
 func (f *Formatter) StartAnalysis(projectSubPath string) {
 	if f.ToolIsToIgnore(tools.BundlerAudit) || f.IsDockerDisabled() {
-		logger.LogDebugWithLevel(messages.MsgDebugToolIgnored + tools.BundlerAudit.ToString())
+		log.Debugf(messages.MsgDebugToolIgnored, tools.BundlerAudit.ToString())
 		return
 	}
 
@@ -154,7 +154,9 @@ func (f *Formatter) getVulnerabilityLineByName(module, fileName string) string {
 	}
 
 	defer func() {
-		logger.LogErrorWithLevel(messages.MsgErrorDeferFileClose, fileExisting.Close())
+		if err := fileExisting.Close(); err != nil {
+			log.Errorf(messages.MsgErrorDeferFileClose, err)
+		}
 	}()
 
 	return f.getLine(module, bufio.NewScanner(fileExisting))

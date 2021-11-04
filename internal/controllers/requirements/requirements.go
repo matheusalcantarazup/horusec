@@ -17,10 +17,10 @@ package requirements
 import (
 	"errors"
 
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	"github.com/ZupIT/horusec/internal/controllers/requirements/docker"
 	"github.com/ZupIT/horusec/internal/controllers/requirements/git"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
+	"github.com/apex/log"
 )
 
 var ErrRequirements = errors.New("check the requirements for run and try again")
@@ -40,13 +40,13 @@ func NewRequirements() *Requirements {
 func (r *Requirements) ValidateDocker() {
 	err := r.dockerRequirements.ValidateDocker()
 	if err != nil {
-		logger.LogPanicWithLevel(messages.MsgPanicDockerRequirementsToRunHorusec, ErrRequirements)
+		log.Fatalf(messages.MsgPanicDockerRequirementsToRunHorusec, ErrRequirements)
 	}
 }
 
 func (r *Requirements) ValidateGit() {
 	err := r.gitRequirements.ValidateGit()
 	if err != nil {
-		logger.LogPanicWithLevel(messages.MsgPanicGitRequirementsToRunHorusec, ErrRequirements)
+		log.Fatalf(messages.MsgPanicGitRequirementsToRunHorusec, ErrRequirements)
 	}
 }

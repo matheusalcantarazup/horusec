@@ -21,7 +21,7 @@ import (
 	"github.com/ZupIT/horusec-devkit/pkg/entities/vulnerability"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/tools"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
+	"github.com/apex/log"
 
 	dockerEntities "github.com/ZupIT/horusec/internal/entities/docker"
 	"github.com/ZupIT/horusec/internal/enums/images"
@@ -43,7 +43,7 @@ func NewFormatter(service formatters.IService) formatters.IFormatter {
 
 func (f *Formatter) StartAnalysis(projectSubPath string) {
 	if f.ToolIsToIgnore(tools.OwaspDependencyCheck) || f.IsDockerDisabled() || f.IsOwaspDependencyCheckDisable() {
-		logger.LogDebugWithLevel(messages.MsgDebugToolIgnored + tools.OwaspDependencyCheck.ToString())
+		log.Debugf(messages.MsgDebugToolIgnored, tools.OwaspDependencyCheck.ToString())
 		return
 	}
 

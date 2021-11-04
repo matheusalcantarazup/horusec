@@ -24,7 +24,7 @@ import (
 	"strings"
 
 	"github.com/ZupIT/horusec-devkit/pkg/enums/vulnerability"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
+	"github.com/apex/log"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
@@ -70,7 +70,7 @@ func (au *UseCases) ValidateConfig(cfg *config.Config) error {
 func (au *UseCases) checkGitDepthClone(cfg *config.Config) validation.RuleFunc {
 	return func(_ interface{}) error {
 		if (cfg.EnableCommitAuthor || cfg.EnableGitHistoryAnalysis) && git.RepositoryIsShallow(cfg) {
-			logger.LogWarn(messages.MsgWarnGitRepositoryIsNotFullCloned)
+			log.Warn(messages.MsgWarnGitRepositoryIsNotFullCloned)
 		}
 		return nil
 	}

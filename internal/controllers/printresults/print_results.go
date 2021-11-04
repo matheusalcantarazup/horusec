@@ -26,7 +26,6 @@ import (
 	"github.com/ZupIT/horusec-devkit/pkg/entities/vulnerability"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/severities"
 	enumsVulnerability "github.com/ZupIT/horusec-devkit/pkg/enums/vulnerability"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 
 	"github.com/ZupIT/horusec/config"
 	sq "github.com/ZupIT/horusec/internal/entities/sonarqube"
@@ -34,10 +33,11 @@ import (
 	"github.com/ZupIT/horusec/internal/helpers/messages"
 	"github.com/ZupIT/horusec/internal/services/sonarqube"
 	"github.com/ZupIT/horusec/internal/utils/file"
+	"github.com/apex/log"
 )
 
 var (
-	ErrOutputJSON = errors.New("{HORUSEC_CLI} error creating and/or writing to the specified file")
+	ErrOutputJSON = errors.New(" error creating and/or writing to the specified file")
 )
 
 type SonarQubeConverter interface {
@@ -79,7 +79,7 @@ func (pr *PrintResults) Print() (totalVulns int, err error) {
 	pr.printResponseAnalysis()
 	pr.checkIfExistsErrorsInAnalysis()
 	if pr.configs.IsTimeout {
-		logger.LogWarnWithLevel(messages.MsgWarnTimeoutOccurs)
+		log.Warn(messages.MsgWarnTimeoutOccurs)
 	}
 
 	return pr.totalVulns, nil
@@ -122,7 +122,7 @@ func (pr *PrintResults) runPrintResultsJSON() error {
 
 	bytesToWrite, err := json.MarshalIndent(a, "", "  ")
 	if err != nil {
-		logger.LogErrorWithLevel(messages.MsgErrorGenerateJSONFile, err)
+		log.Errorf(messages.MsgErrorGenerateJSONFile, err)
 		return err
 	}
 	return pr.parseFilePathToAbsAndCreateOutputJSON(bytesToWrite)
@@ -143,7 +143,7 @@ func (pr *PrintResults) checkIfExistVulnerabilityOrNoSec() {
 func (pr *PrintResults) validateVulnerabilityToCheckTotalErrors(vuln *vulnerability.Vulnerability) {
 	if vuln.Severity.ToString() != "" && !pr.isTypeVulnToSkip(vuln) {
 		if !pr.isIgnoredVulnerability(vuln.Severity.ToString()) {
-			logger.LogDebugWithLevel(messages.MsgDebugVulnHashToFix + vuln.VulnHash)
+			log.Debugf(messages.MsgDebugVulnHashToFix, vuln.VulnHash)
 			pr.totalVulns++
 		}
 	}
@@ -170,18 +170,18 @@ func (pr *PrintResults) isIgnoredVulnerability(vulnerabilityType string) (ignore
 }
 
 func (pr *PrintResults) saveSonarQubeFormatResults() error {
-	logger.LogInfoWithLevel(messages.MsgInfoStartGenerateSonarQubeFile)
+	log.Info(messages.MsgInfoStartGenerateSonarQubeFile)
 	report := pr.sonarqubeService.ConvertVulnerabilityToSonarQube()
 	bytesToWrite, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
-		logger.LogErrorWithLevel(messages.MsgErrorGenerateJSONFile, err)
+		log.Errorf(messages.MsgErrorGenerateJSONFile, err)
 		return err
 	}
 	return pr.parseFilePathToAbsAndCreateOutputJSON(bytesToWrite)
 }
 
 func (pr *PrintResults) returnDefaultErrOutputJSON(err error) error {
-	logger.LogErrorWithLevel(messages.MsgErrorGenerateJSONFile, err)
+	log.Errorf(messages.MsgErrorGenerateJSONFile, err)
 	return ErrOutputJSON
 }
 
@@ -193,7 +193,7 @@ func (pr *PrintResults) parseFilePathToAbsAndCreateOutputJSON(bytesToWrite []byt
 	if _, err := os.Create(completePath); err != nil {
 		return pr.returnDefaultErrOutputJSON(err)
 	}
-	logger.LogInfoWithLevel(messages.MsgInfoStartWriteFile + completePath)
+	log.Info(messages.MsgInfoStartWriteFile + completePath)
 	return pr.openJSONFileAndWriteBytes(bytesToWrite, completePath)
 }
 
@@ -306,18 +306,18 @@ func (pr *PrintResults) printCommitAuthor(vulnerability *vulnerability.Vulnerabi
 func (pr *PrintResults) verifyRepositoryAuthorizationToken() {
 	if pr.configs.IsEmptyRepositoryAuthorization() {
 		fmt.Print("\n")
-		logger.LogWarnWithLevel(messages.MsgWarnAuthorizationNotFound)
+		log.Warn(messages.MsgWarnAuthorizationNotFound)
 		fmt.Print("\n")
 	}
 }
 
 func (pr *PrintResults) checkIfExistsErrorsInAnalysis() {
 	if !pr.configs.EnableInformationSeverity {
-		logger.LogWarnWithLevel(messages.MsgWarnInfoVulnerabilitiesDisabled)
+		log.Warn(messages.MsgWarnInfoVulnerabilitiesDisabled)
 	}
 	if pr.analysis.HasErrors() {
 		pr.logSeparator(true)
-		logger.LogWarnWithLevel(messages.MsgWarnFoundErrorsInAnalysis)
+		log.Warn(messages.MsgWarnFoundErrorsInAnalysis)
 		fmt.Print("\n")
 
 		for _, errorMessage := range strings.SplitAfter(pr.analysis.Errors, ";") {
@@ -333,21 +333,21 @@ func (pr *PrintResults) printErrors(errorMessage string) {
 		strings.Contains(errorMessage, messages.MsgErrorYarnLockNotFound) ||
 		strings.Contains(errorMessage, messages.MsgErrorGemLockNotFound) ||
 		strings.Contains(errorMessage, messages.MsgErrorNotFoundRequirementsTxt) {
-		logger.LogWarnWithLevel(strings.ReplaceAll(errorMessage, ";", ""))
+		log.Warn(strings.ReplaceAll(errorMessage, ";", ""))
 		return
 	}
 
-	logger.LogStringAsError(strings.ReplaceAll(errorMessage, ";", ""))
+	log.Error(strings.ReplaceAll(errorMessage, ";", ""))
 }
 
 func (pr *PrintResults) printResponseAnalysis() {
 	if pr.totalVulns > 0 {
-		logger.LogWarnWithLevel(fmt.Sprintf(messages.MsgWarnAnalysisFoundVulns, pr.totalVulns))
+		log.Warnf(messages.MsgWarnAnalysisFoundVulns, pr.totalVulns)
 		fmt.Print("\n")
 		return
 	}
 
-	logger.LogWarnWithLevel(messages.MsgWarnAnalysisFinishedWithoutVulns)
+	log.Warn(messages.MsgWarnAnalysisFinishedWithoutVulns)
 	fmt.Print("\n")
 }
 

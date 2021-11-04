@@ -18,29 +18,29 @@ import "errors"
 
 // Occurs when o git is not installed in O.S
 
-var ErrGitNotInstalled = errors.New("{HORUSEC_CLI} Error Git not found. Please check and try again")
+var ErrGitNotInstalled = errors.New(" Error Git not found. Please check and try again")
 
 // Occurs when o git is lower version required
 
-var ErrGitLowerVersion = errors.New("{HORUSEC_CLI} Error Git version is lower of 2.01. Please check and try again")
+var ErrGitLowerVersion = errors.New(" Error Git version is lower of 2.01. Please check and try again")
 
 // Occurs when o docker is not installed in O.S
 
-var ErrDockerNotInstalled = errors.New("{HORUSEC_CLI} Error Docker not found. Please check and try again")
+var ErrDockerNotInstalled = errors.New(" Error Docker not found. Please check and try again")
 
 // Occurs when CsProj not found in dotnet project
 
-var ErrSolutionNotFound = errors.New("{HORUSEC_CLI} Security code scan failed to execute," +
+var ErrSolutionNotFound = errors.New(" Security code scan failed to execute," +
 	" specify a solution file. The current working directory does not contain a solution file")
 
 // Occurs when not found rails project
 
-var ErrNotFoundRailsProject = errors.New("{HORUSEC_CLI} Error not found rails project syntax")
+var ErrNotFoundRailsProject = errors.New(" Error not found rails project syntax")
 
 // Occurs when gem lock not found
 
 var ErrGemLockNotFound = errors.New(
-	"{HORUSEC_CLI} Error It looks like your project doesn't have a gemfile.lock file," +
+	" Error It looks like your project doesn't have a gemfile.lock file," +
 		" it would be a good idea to commit it so horusec can check for vulnerabilities")
 
 var ErrImageTagCmdRequired = errors.New("{ERROR_DOCKER_API} required exists Image, Tag and CMD not empty")

@@ -28,11 +28,11 @@ import (
 	commitauthor "github.com/ZupIT/horusec/internal/entities/commit_author"
 	"github.com/ZupIT/horusec/internal/utils/file"
 	vulnhash "github.com/ZupIT/horusec/internal/utils/vuln_hash"
+	"github.com/apex/log"
 
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/severities"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/tools"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	engine "github.com/ZupIT/horusec-engine"
 	"github.com/ZupIT/horusec/config"
 	dockerentity "github.com/ZupIT/horusec/internal/entities/docker"
@@ -96,7 +96,7 @@ func (s *Service) GetConfigProjectPath() string {
 
 func (s *Service) AddWorkDirInCmd(cmd, projectSubPath string, tool tools.Tool) string {
 	if projectSubPath != "" {
-		logger.LogDebugWithLevel(messages.MsgDebugShowWorkdir, tool.ToString(), projectSubPath)
+		log.Debugf(messages.MsgDebugShowWorkdir, tool.ToString(), projectSubPath)
 		return strings.ReplaceAll(cmd, "{{WORK_DIR}}", fmt.Sprintf("cd %s", projectSubPath))
 	}
 
@@ -106,7 +106,7 @@ func (s *Service) AddWorkDirInCmd(cmd, projectSubPath string, tool tools.Tool) s
 func (s *Service) LogDebugWithReplace(msg string, tool tools.Tool, lang languages.Language) {
 	newMsg := strings.ReplaceAll(msg, "{{0}}", tool.ToString())
 	newMsg = strings.ReplaceAll(newMsg, "{{1}}", lang.ToString())
-	logger.LogDebugWithLevel(newMsg, s.analysis.GetIDString())
+	log.Debugf(newMsg, s.analysis.GetIDString())
 }
 
 func (s *Service) GetAnalysisID() string {
@@ -124,7 +124,7 @@ func (s *Service) SetAnalysisError(err error, tool tools.Tool, projectSubPath st
 		}
 
 		msg = strings.ReplaceAll(msg, "| output -> {{2}}", "")
-		logger.LogDebugWithLevel(fmt.Sprintf("%s - %s", msg, err))
+		log.Debugf("%s - %s", msg, err)
 	}
 }
 

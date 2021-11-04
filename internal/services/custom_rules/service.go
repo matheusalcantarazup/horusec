@@ -16,13 +16,12 @@ package customrules
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
+	"github.com/apex/log"
 
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	engine "github.com/ZupIT/horusec-engine"
 	"github.com/ZupIT/horusec-engine/text"
 	"github.com/ZupIT/horusec/config"
@@ -56,7 +55,7 @@ func (s *Service) setCustomRules() {
 
 	customRules, err := s.openCustomRulesJSONFile()
 	if err != nil {
-		logger.LogError("{HORUSEC_CLI} failed to get custom rules: ", err)
+		log.Errorf("Failed to get custom rules: %v", err)
 	}
 
 	for index := range customRules {
@@ -66,8 +65,7 @@ func (s *Service) setCustomRules() {
 
 func (s *Service) validateAndParseCustomRule(index int, customRules []customRulesEntities.CustomRule) {
 	if err := customRules[index].Validate(); err != nil {
-		errMsg := fmt.Sprintf("{HORUSEC_CLI} invalid custom rule: %s", customRules[index].String())
-		logger.LogError(errMsg, err)
+		log.Errorf("invalid custom rule %s: %v", customRules[index].String(), err)
 		return
 	}
 

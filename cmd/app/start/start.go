@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/ZupIT/horusec/internal/controllers/requirements"
+	"github.com/apex/log"
 
 	"github.com/ZupIT/horusec/config"
 	"github.com/ZupIT/horusec/config/dist"
@@ -29,7 +30,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	"github.com/ZupIT/horusec/internal/controllers/analyzer"
 	"github.com/ZupIT/horusec/internal/utils/prompt"
 )
@@ -309,14 +309,14 @@ func (s *Start) startAnalysis(cmd *cobra.Command) (totalVulns int, err error) {
 
 func (s *Start) configsValidations(cmd *cobra.Command) error {
 	if err := s.useCases.ValidateConfig(s.configs); err != nil {
-		logger.LogErrorWithLevel(messages.MsgErrorInvalidConfigs, err)
+		log.Errorf(messages.MsgErrorInvalidConfigs, err)
 		_ = cmd.Help()
 		return err
 	}
 
 	s.validateRequirements()
 
-	logger.LogDebugWithLevel(messages.MsgDebugShowConfigs + string(s.configs.Bytes()))
+	log.Debugf(messages.MsgDebugShowConfigs, string(s.configs.Bytes()))
 	return nil
 }
 
@@ -356,7 +356,7 @@ func (s *Start) askIfRunInDirectorySelected(shouldAsk bool) error {
 			fmt.Sprintf("The folder selected is: [%s]. Proceed? [Y/n]", s.configs.ProjectPath),
 			"Y")
 		if err != nil {
-			logger.LogWarnWithLevel(messages.MsgWarnWhenAskDirToRun, err.Error())
+			log.Warnf(messages.MsgWarnWhenAskDirToRun, err.Error())
 			return err
 		}
 		return s.validateReplyOfAsk(response)
@@ -366,7 +366,7 @@ func (s *Start) askIfRunInDirectorySelected(shouldAsk bool) error {
 
 func (s *Start) validateReplyOfAsk(response string) error {
 	if !strings.EqualFold(response, "y") && !strings.EqualFold(response, "n") {
-		logger.LogErrorWithLevel(messages.MsgErrorReplayWrong+response, errors.New("reply invalid"))
+		log.Errorf(messages.MsgErrorReplayWrong+response, errors.New("reply invalid"))
 		return s.askIfRunInDirectorySelected(true)
 	}
 	if strings.EqualFold(response, "n") {

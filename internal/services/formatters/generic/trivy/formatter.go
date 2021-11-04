@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/apex/log"
 	"github.com/google/uuid"
 
 	"github.com/ZupIT/horusec-devkit/pkg/entities/vulnerability"
@@ -28,7 +29,6 @@ import (
 	"github.com/ZupIT/horusec-devkit/pkg/enums/severities"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/tools"
 	enumsVulnerability "github.com/ZupIT/horusec-devkit/pkg/enums/vulnerability"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 
 	dockerEntities "github.com/ZupIT/horusec/internal/entities/docker"
 	"github.com/ZupIT/horusec/internal/enums/images"
@@ -57,7 +57,7 @@ func NewFormatter(service formatters.IService) formatters.IFormatter {
 
 func (f *Formatter) StartAnalysis(projectSubPath string) {
 	if f.ToolIsToIgnore(tools.Trivy) || f.IsDockerDisabled() {
-		logger.LogDebugWithLevel(messages.MsgDebugToolIgnored + tools.Trivy.ToString())
+		log.Debugf(messages.MsgDebugToolIgnored, tools.Trivy.ToString())
 		return
 	}
 

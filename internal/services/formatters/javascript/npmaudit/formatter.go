@@ -25,10 +25,10 @@ import (
 
 	"github.com/ZupIT/horusec-devkit/pkg/entities/vulnerability"
 	vulnhash "github.com/ZupIT/horusec/internal/utils/vuln_hash"
+	"github.com/apex/log"
 
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/tools"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	dockerEntities "github.com/ZupIT/horusec/internal/entities/docker"
 	"github.com/ZupIT/horusec/internal/enums/images"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
@@ -48,7 +48,7 @@ func NewFormatter(service formatters.IService) formatters.IFormatter {
 
 func (f *Formatter) StartAnalysis(projectSubPath string) {
 	if f.ToolIsToIgnore(tools.NpmAudit) || f.IsDockerDisabled() {
-		logger.LogDebugWithLevel(messages.MsgDebugToolIgnored + tools.NpmAudit.ToString())
+		log.Debugf(messages.MsgDebugToolIgnored, tools.NpmAudit.ToString())
 		return
 	}
 
@@ -100,12 +100,14 @@ func (f *Formatter) IsNotFoundError(containerOutput string) error {
 
 func (f *Formatter) newContainerOutputFromString(containerOutput string) (output *entities.Output, err error) {
 	if containerOutput == "" {
-		logger.LogDebugWithLevel(messages.MsgDebugOutputEmpty, map[string]interface{}{"tool": tools.NpmAudit.ToString()})
+		log.WithFields(log.Fields{
+			"tool": tools.NpmAudit.ToString(),
+		}).Debug(messages.MsgDebugOutputEmpty)
 		return &entities.Output{}, nil
 	}
 
 	if err = json.Unmarshal([]byte(containerOutput), &output); err != nil {
-		logger.LogErrorWithLevel(f.GetAnalysisIDErrorMessage(tools.NpmAudit, containerOutput), err)
+		log.Errorf(f.GetAnalysisIDErrorMessage(tools.NpmAudit, containerOutput), err)
 	}
 
 	return output, err
@@ -148,7 +150,9 @@ func (f *Formatter) getVulnerabilityLineByName(version, module, file string) str
 	}
 
 	defer func() {
-		logger.LogErrorWithLevel(messages.MsgErrorDeferFileClose, fileExisting.Close())
+		if err := fileExisting.Close(); err != nil {
+			log.Errorf(messages.MsgErrorDeferFileClose, err)
+		}
 	}()
 
 	return f.getLine(version, module, bufio.NewScanner(fileExisting))

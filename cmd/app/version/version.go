@@ -15,9 +15,9 @@
 package version
 
 import (
-	"github.com/spf13/cobra"
+	"fmt"
 
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
+	"github.com/spf13/cobra"
 
 	"github.com/ZupIT/horusec/config/dist"
 )
@@ -41,8 +41,8 @@ func CreateCobraCmd() *cobra.Command {
 }
 
 func printVersionInfo() {
-	logger.LogPrint("Version:          " + Version)
-	logger.LogPrint("Git commit:       " + Commit)
-	logger.LogPrint("Built:            " + Date)
-	logger.LogPrint("Distribution:     " + dist.GetVersion())
+	fmt.Println("Version:          " + Version)
+	fmt.Println("Git commit:       " + Commit)
+	fmt.Println("Built:            " + Date)
+	fmt.Println("Distribution:     " + dist.GetVersion())
 }

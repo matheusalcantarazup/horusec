@@ -15,12 +15,11 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
-	engine "github.com/ZupIT/horusec-engine"
 	"github.com/ZupIT/horusec/cmd/app/generate"
 	"github.com/ZupIT/horusec/cmd/app/start"
 	"github.com/ZupIT/horusec/cmd/app/version"
@@ -35,7 +34,7 @@ func main() {
 		Use:   "horusec",
 		Short: "Horusec CLI prepares packages to be analyzed by the Horusec Analysis API",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logger.LogPrint("Horusec Command Line is an orchestrates security," +
+			fmt.Println("Horusec Command Line is an orchestrates security," +
 				"tests and centralizes all results into a database for further analysis and metrics.")
 			return cmd.Help()
 		},
@@ -77,7 +76,7 @@ horusec start -p="/home/user/projects/my-project"
 	rootCmd.AddCommand(generateCmd.CreateCobraCmd())
 
 	cobra.OnInitialize(func() {
-		engine.SetLogLevel(cfg.LogLevel)
+		// engine.SetLogLevel(cfg.LogLevel)
 	})
 
 	if err := rootCmd.Execute(); err != nil {

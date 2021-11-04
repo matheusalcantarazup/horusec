@@ -18,8 +18,8 @@ import (
 	"encoding/json"
 
 	"github.com/ZupIT/horusec-devkit/pkg/enums/tools"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
+	"github.com/apex/log"
 )
 
 type MapToolConfig map[tools.Tool]ToolConfig
@@ -85,12 +85,12 @@ func ParseInterfaceToMapToolsConfig(input interface{}) (output MapToolConfig) {
 	outputStruct := ToolsConfigsStruct{}
 	bytes, err := json.Marshal(input)
 	if err != nil {
-		logger.LogErrorWithLevel(messages.MsgErrorParseStringToToolsConfig, err)
+		log.Errorf(messages.MsgErrorParseStringToToolsConfig, err)
 		return outputStruct.ToMap()
 	}
 	err = json.Unmarshal(bytes, &outputStruct)
 	if err != nil {
-		logger.LogErrorWithLevel(messages.MsgErrorParseStringToToolsConfig, err)
+		log.Errorf(messages.MsgErrorParseStringToToolsConfig, err)
 		return outputStruct.ToMap()
 	}
 	return outputStruct.ToMap()

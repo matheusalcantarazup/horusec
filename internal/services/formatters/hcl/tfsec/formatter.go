@@ -20,13 +20,13 @@ import (
 	"strings"
 
 	vulnhash "github.com/ZupIT/horusec/internal/utils/vuln_hash"
+	"github.com/apex/log"
 
 	"github.com/ZupIT/horusec/internal/enums/images"
 
 	"github.com/ZupIT/horusec-devkit/pkg/entities/vulnerability"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/tools"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	dockerEntities "github.com/ZupIT/horusec/internal/entities/docker"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
 	"github.com/ZupIT/horusec/internal/services/formatters"
@@ -45,7 +45,7 @@ func NewFormatter(service formatters.IService) formatters.IFormatter {
 
 func (f *Formatter) StartAnalysis(projectSubPath string) {
 	if f.ToolIsToIgnore(tools.TfSec) || f.IsDockerDisabled() {
-		logger.LogDebugWithLevel(messages.MsgDebugToolIgnored + tools.TfSec.ToString())
+		log.Debugf(messages.MsgDebugToolIgnored, tools.TfSec.ToString())
 		return
 	}
 
@@ -78,7 +78,7 @@ func (f *Formatter) parseOutput(output string) error {
 
 	if err := json.Unmarshal([]byte(output), &vulnerabilities); err != nil {
 		if !strings.Contains(output, "panic") {
-			return fmt.Errorf("{HORUSEC_CLI} Error %s", output)
+			return fmt.Errorf(" Error %s", output)
 		}
 
 		return err

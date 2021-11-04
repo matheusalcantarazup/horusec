@@ -24,7 +24,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
+	"github.com/apex/log"
 )
 
 // GetPathFromFilename return the relative file path inside basePath
@@ -50,10 +50,10 @@ func GetPathFromFilename(filename, basePath string) string {
 		return nil
 	})
 	if err != nil && !errors.Is(err, io.EOF) {
-		logger.LogError("Error to find filepath", err, map[string]interface{}{
+		log.WithFields(log.Fields{
 			"filename": filename,
 			"basePath": basePath,
-		})
+		}).Errorf("Error to find filepath: %v", err)
 		return ""
 	}
 
@@ -92,12 +92,12 @@ func GetSubPathByExtension(projectPath, subPath, ext string) (finalPath string) 
 		return nil
 	})
 	if err != nil && !errors.Is(err, io.EOF) {
-		logger.LogError("Error to walk on path", err, map[string]interface{}{
+		log.WithFields(log.Fields{
 			"path":        pathToWalk,
 			"projectPath": projectPath,
 			"subPath":     subPath,
 			"ext":         ext,
-		})
+		}).Errorf("Error to walk on path: %v", err)
 		return ""
 	}
 
@@ -156,12 +156,12 @@ func GetFilenameByExt(projectPath, subPath, ext string) (string, error) {
 		return nil
 	})
 	if err != nil && !errors.Is(err, io.EOF) {
-		logger.LogError("Error to walk on path", err, map[string]interface{}{
+		log.WithFields(log.Fields{
 			"path":        pathToWalk,
 			"projectPath": projectPath,
 			"subPath":     subPath,
 			"ext":         ext,
-		})
+		}).Errorf("Error to walk on path: %v", err)
 		return "", err
 	}
 
@@ -174,11 +174,11 @@ func GetCode(projectPath, filename, line string) (string, error) {
 
 	file, err := os.Open(filepath.Clean(path))
 	if err != nil {
-		logger.LogError("Error to open file to get code sample", err, map[string]interface{}{
+		log.WithFields(log.Fields{
 			"projectPath": projectPath,
 			"filename":    filename,
 			"line":        line,
-		})
+		}).Errorf("Error to open file to get code sample: %v", err)
 		return "", err
 	}
 	defer func() {

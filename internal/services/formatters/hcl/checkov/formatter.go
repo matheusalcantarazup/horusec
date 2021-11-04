@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 
+	"github.com/apex/log"
 	"github.com/pborman/ansi"
 
 	vulnhash "github.com/ZupIT/horusec/internal/utils/vuln_hash"
@@ -27,7 +28,6 @@ import (
 	"github.com/ZupIT/horusec-devkit/pkg/entities/vulnerability"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
 	"github.com/ZupIT/horusec-devkit/pkg/enums/tools"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	dockerEntities "github.com/ZupIT/horusec/internal/entities/docker"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
 	"github.com/ZupIT/horusec/internal/services/formatters"
@@ -46,7 +46,7 @@ func NewFormatter(service formatters.IService) formatters.IFormatter {
 
 func (f *Formatter) StartAnalysis(projectSubPath string) {
 	if f.ToolIsToIgnore(tools.Checkov) || f.IsDockerDisabled() {
-		logger.LogDebugWithLevel(messages.MsgDebugToolIgnored + tools.Checkov.ToString())
+		log.Debugf(messages.MsgDebugToolIgnored, tools.Checkov.ToString())
 		return
 	}
 

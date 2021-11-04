@@ -18,8 +18,8 @@ import (
 	"encoding/json"
 
 	"github.com/ZupIT/horusec-devkit/pkg/enums/languages"
-	"github.com/ZupIT/horusec-devkit/pkg/utils/logger"
 	"github.com/ZupIT/horusec/internal/helpers/messages"
+	"github.com/apex/log"
 )
 
 type WorkDir struct {
@@ -76,11 +76,11 @@ func (w *WorkDir) ParseInterfaceToStruct(toParse interface{}) *WorkDir {
 	}
 	bytes, err := json.Marshal(toParse)
 	if err != nil {
-		logger.LogErrorWithLevel(messages.MsgErrorParseStringToWorkDir, err)
+		log.Errorf(messages.MsgErrorParseStringToWorkDir, err)
 		return w
 	}
 	if err = json.Unmarshal(bytes, &w); err != nil {
-		logger.LogErrorWithLevel(messages.MsgErrorParseStringToWorkDir, err)
+		log.Errorf(messages.MsgErrorParseStringToWorkDir, err)
 	}
 	return w.setEmptyOrSliceEmptyInNilContent()
 }

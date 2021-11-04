@@ -16,5 +16,5 @@ package messages
 
 // Block of messages usage into log of the level trace
 const (
-	MsgTraceLanguageFound = "{HORUSEC_CLI} When start analysis we found the file in path with the language: "
+	MsgTraceLanguageFound = "When start analysis we found the file in path with the language: "
 )
